@@ -1,13 +1,16 @@
 //jshint esversion:6
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const encrypt = require("mongoose-encryption")
+const encrypt = require("mongoose-encryption") //call the mongoose-encrption plugin
 
 const port = 3000 || process.env.PORT;
 
 const app = express();
+
+console.log(process.env.API_KEY);
 
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
@@ -22,9 +25,9 @@ const userSchema = new mongoose.Schema( {
 	password: String,
 });
 
-const secret = "thisisoursecret";
-userSchema.plugin(encrypt, { secret: secret,encryptedFields: ['password'] });
-
+const secret = process.env.SECRET;
+userSchema.plugin(encrypt, { secret: secret,encryptedFields: ['password'] }); //use the plugin before the scheman declaration
+//it will enables the password to be stored encrypted in save method, and will be searched as uncrpyted with find method.
 
 const User = new mongoose.model("User", userSchema);
 
