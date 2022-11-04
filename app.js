@@ -4,7 +4,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const md5 = require("md5");
+const bcrypt = require("bcrypt");
+
+var salt = bcrypt.genSaltSync(10);
 
 
 const port = 3000 || process.env.PORT;
@@ -47,7 +49,7 @@ app.route("/register")
 .post(function(req,res){
 	const newItem = new User({
 		email: req.body.username,
-		password: md5(req.body.password)
+		password: bcrypt.hashSync(req.body.password, salt)
 	});
 	newItem.save(function(err){
 		if(!err){
@@ -66,14 +68,14 @@ app.route("/login")
 
 .post(function(req,res){
 	const username = req.body.username;
-	const password = md5(req.body.password); //every hash password for every string is the same, thus the hashed password at login 'will mathces' the hashed password at register
+	const password = req.body.password; //every hash password for every string is the same, thus the hashed password at login 'will mathces' the hashed password at register
 
 	User.findOne({email: username}, function(err, foundUsr){
 		if(err){
 			console.log(err);
 		}else{
 			if(foundUsr){
-				if(foundUsr.password === password){
+				if(bcrypt.compareSync(password, foundUsr.password)){
 					res.render("secrets.ejs");
 				};
 			};
