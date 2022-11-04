@@ -4,7 +4,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const encrypt = require("mongoose-encryption") //call the mongoose-encrption plugin
+const md5 = require("md5");
+
 
 const port = 3000 || process.env.PORT;
 
@@ -25,9 +26,8 @@ const userSchema = new mongoose.Schema( {
 	password: String,
 });
 
-const secret = process.env.SECRET;
-userSchema.plugin(encrypt, { secret: secret,encryptedFields: ['password'] }); //use the plugin before the scheman declaration
-//it will enables the password to be stored encrypted in save method, and will be searched as uncrpyted with find method.
+
+
 
 const User = new mongoose.model("User", userSchema);
 
@@ -47,7 +47,7 @@ app.route("/register")
 .post(function(req,res){
 	const newItem = new User({
 		email: req.body.username,
-		password: req.body.password
+		password: md5(req.body.password)
 	});
 	newItem.save(function(err){
 		if(!err){
@@ -66,7 +66,7 @@ app.route("/login")
 
 .post(function(req,res){
 	const username = req.body.username;
-	const password = req.body.password;
+	const password = md5(req.body.password); //every hash password for every string is the same, thus the hashed password at login 'will mathces' the hashed password at register
 
 	User.findOne({email: username}, function(err, foundUsr){
 		if(err){
