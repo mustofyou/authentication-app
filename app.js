@@ -4,10 +4,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const bcrypt = require("bcrypt");
-
-var salt = bcrypt.genSaltSync(10);
-
+const session = require("express-session");
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
 
 const port = 3000 || process.env.PORT;
 
@@ -21,6 +20,16 @@ app.use(bodyParser.urlencoded({
 	extended: true
 }));
 
+app.use(session({
+	secret: "secret",
+	resave: false,
+	saveUninitialized: false,
+
+}));
+
+app.use(passport.initialize());
+app.use(passport.session())
+
 mongoose.connect("mongodb+srv://mustofyou:Sifreney5@cluster0.krlyp.mongodb.net/?retryWrites=true&w=majority", {useNewUrlParser: true}); 
 
 const userSchema = new mongoose.Schema( {
@@ -28,17 +37,26 @@ const userSchema = new mongoose.Schema( {
 	password: String,
 });
 
-
+userSchema.plugin(passportLocalMongoose);
 
 
 const User = new mongoose.model("User", userSchema);
 
+passport.use(User.createStrategy());
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.route("/")
 
 .get(function(req,res){
 	res.render("home.ejs")
 });
+
+app.get("/secrets", function(req,res){
+	if(req.isAuthenticated()){
+		res.render("secrets")
+	}
+})
 
 app.route("/register")
 
@@ -47,15 +65,14 @@ app.route("/register")
 })
 
 .post(function(req,res){
-	const newItem = new User({
-		email: req.body.username,
-		password: bcrypt.hashSync(req.body.password, salt)
-	});
-	newItem.save(function(err){
-		if(!err){
-			res.render("secrets.ejs");
-		}else{
-			res.send(err)
+	User.register({username: req.body.username}, req.body.password, function(err, user){
+		if(err){
+			console.log(err);
+			res.redirect("/register");
+		} else {
+			passport.authenticate("local")(req, res, function(){
+				res.redirect("/secrets")
+			});
 		}
 	});
 });
@@ -67,23 +84,28 @@ app.route("/login")
 })
 
 .post(function(req,res){
-	const username = req.body.username;
-	const password = req.body.password; //every hash password for every string is the same, thus the hashed password at login 'will mathces' the hashed password at register
-
-	User.findOne({email: username}, function(err, foundUsr){
-		if(err){
+	const user = new User({
+		username: req.body.username,
+		password: req.body.password
+	});
+	req.login(user, function(err){
+		if (err) {
 			console.log(err);
-		}else{
-			if(foundUsr){
-				if(bcrypt.compareSync(password, foundUsr.password)){
-					res.render("secrets.ejs");
-				};
-			};
+		} else{
+			console.log("signing in");
+			passport.authenticate("local");
+			res.redirect("/secrets");
+
 		};
 	});
-})
+});
 
+app.get("/logout", function(req,res){
+	req.logout(function(err){
+		res.redirect("/");
+	});
 
+});
 
 
 app.listen(port, function(){
