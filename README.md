@@ -30,8 +30,8 @@ This is a web application built using Node.js and Express.js that implements use
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/project-name.git
-cd project-name
+git clone https://github.com/mustofyou/authentication-app.git
+cd authentication-app
 2. install dependencies:
 npm install
 3. Create a .env file and add the following:
