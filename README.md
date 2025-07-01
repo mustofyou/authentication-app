@@ -40,6 +40,7 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 API_KEY=your_optional_api_key
 4. Start the server:
 node app.js / nodemon app.js
+```
 
 🧠 Skills Gained from This Project
 Understanding of user authentication flows (Local & OAuth)
